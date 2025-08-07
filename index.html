@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinic Inventory Management System</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/responsive.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-clinic-medical"></i>
+                    <span>ClinicInventory</span>
+                </div>
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item active">
+                    <a href="#" data-section="dashboard" class="nav-link">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" data-section="inventory" class="nav-link">
+                        <i class="fas fa-boxes"></i>
+                        <span>Inventory</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" data-section="add-item" class="nav-link">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Add Item</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" data-section="alerts" class="nav-link">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Alerts</span>
+                        <span class="alert-badge" id="alertBadge">0</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="content-section active">
+                <div class="section-header">
+                    <h1>Dashboard Overview</h1>
+                    <p>Monitor your clinic's inventory status</p>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalItems">0</h3>
+                            <p>Total Items</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card alert">
+                        <div class="stat-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="lowStockItems">0</h3>
+                            <p>Low Stock Items</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card warning">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-times"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="expiringItems">0</h3>
+                            <p>Expiring Soon</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card success">
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="inStockItems">0</h3>
+                            <p>In Stock</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="chart-container">
+                        <h3>Recent Activity</h3>
+                        <div class="activity-list" id="recentActivity">
+                            <!-- Recent activity items will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div class="alerts-preview">
+                        <h3>Critical Alerts</h3>
+                        <div class="alert-list" id="criticalAlerts">
+                            <!-- Critical alerts will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Inventory Section -->
+            <section id="inventory" class="content-section">
+                <div class="section-header">
+                    <h1>Inventory Management</h1>
+                    <button class="btn btn-primary" id="addItemBtn">
+                        <i class="fas fa-plus"></i>
+                        Add New Item
+                    </button>
+                </div>
+                
+                <div class="filters-container">
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Search items..." class="search-input">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+                    
+                    <div class="filter-controls">
+                        <select id="categoryFilter" class="filter-select">
+                            <option value="">All Categories</option>
+                            <option value="Medicine">Medicine</option>
+                            <option value="Consumable">Consumable</option>
+                            <option value="Equipment">Equipment</option>
+                            <option value="Supplement">Supplement</option>
+                        </select>
+                        
+                        <select id="statusFilter" class="filter-select">
+                            <option value="">All Status</option>
+                            <option value="in-stock">In Stock</option>
+                            <option value="low-stock">Low Stock</option>
+                            <option value="expiring">Expiring Soon</option>
+                            <option value="expired">Expired</option>
+                        </select>
+                        
+                        <button class="btn btn-secondary" id="resetFilters">Reset</button>
+                    </div>
+                </div>
+                
+                <div class="inventory-table-container">
+                    <table class="inventory-table" id="inventoryTable">
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th>Category</th>
+                                <th>Quantity</th>
+                                <th>Expiry Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody">
+                            <!-- Table rows will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Add Item Section -->
+            <section id="add-item" class="content-section">
+                <div class="section-header">
+                    <h1>Add New Item</h1>
+                    <p>Add new items to your clinic inventory</p>
+                </div>
+                
+                <div class="form-container">
+                    <form id="addItemForm" class="item-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="itemName">Item Name *</label>
+                                <input type="text" id="itemName" name="itemName" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="itemCategory">Category *</label>
+                                <select id="itemCategory" name="itemCategory" required>
+                                    <option value="">Select Category</option>
+                                    <option value="Medicine">Medicine</option>
+                                    <option value="Consumable">Consumable</option>
+                                    <option value="Equipment">Equipment</option>
+                                    <option value="Supplement">Supplement</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="itemQuantity">Quantity *</label>
+                                <input type="number" id="itemQuantity" name="itemQuantity" min="0" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="lowStockThreshold">Low Stock Threshold</label>
+                                <input type="number" id="lowStockThreshold" name="lowStockThreshold" min="0" value="10">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="expiryDate">Expiry Date *</label>
+                                <input type="date" id="expiryDate" name="expiryDate" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="batchNumber">Batch Number</label>
+                                <input type="text" id="batchNumber" name="batchNumber">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group full-width">
+                            <label for="itemDescription">Description</label>
+                            <textarea id="itemDescription" name="itemDescription" rows="3" placeholder="Optional description..."></textarea>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Add Item</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Alerts Section -->
+            <section id="alerts" class="content-section">
+                <div class="section-header">
+                    <h1>Alerts & Notifications</h1>
+                    <p>Monitor critical inventory issues</p>
+                </div>
+                
+                <div class="alerts-container">
+                    <div class="alert-category">
+                        <h3>Low Stock Alerts</h3>
+                        <div class="alert-list" id="lowStockAlerts">
+                            <!-- Low stock alerts will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div class="alert-category">
+                        <h3>Expiry Alerts</h3>
+                        <div class="alert-list" id="expiryAlerts">
+                            <!-- Expiry alerts will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal for Item Details/Edit -->
+    <div id="itemModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Item Details</h3>
+                <button class="close-btn" id="closeModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editItemForm" class="item-form">
+                    <input type="hidden" id="editItemId">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="editItemName">Item Name *</label>
+                            <input type="text" id="editItemName" name="itemName" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editItemCategory">Category *</label>
+                            <select id="editItemCategory" name="itemCategory" required>
+                                <option value="Medicine">Medicine</option>
+                                <option value="Consumable">Consumable</option>
+                                <option value="Equipment">Equipment</option>
+                                <option value="Supplement">Supplement</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editItemQuantity">Quantity *</label>
+                            <div class="quantity-controls">
+                                <button type="button" class="quantity-btn" id="decreaseBtn">-</button>
+                                <input type="number" id="editItemQuantity" name="itemQuantity" min="0" required>
+                                <button type="button" class="quantity-btn" id="increaseBtn">+</button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editLowStockThreshold">Low Stock Threshold</label>
+                            <input type="number" id="editLowStockThreshold" name="lowStockThreshold" min="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editExpiryDate">Expiry Date *</label>
+                            <input type="date" id="editExpiryDate" name="expiryDate" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editBatchNumber">Batch Number</label>
+                            <input type="text" id="editBatchNumber" name="batchNumber">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label for="editItemDescription">Description</label>
+                        <textarea id="editItemDescription" name="itemDescription" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-danger" id="deleteItemBtn">Delete</button>
+                        <button type="button" class="btn btn-secondary" id="cancelEditBtn">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Item</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="loading-spinner">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- JavaScript Files -->
+    <script src="js/data.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/inventory.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/alerts.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
