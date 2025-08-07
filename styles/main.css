@@ -110,15 +110,23 @@ body {
 /* Sidebar collapsed state */
 .sidebar.collapsed {
     width: var(--sidebar-collapsed-width);
+    overflow: hidden;
 }
 
-.sidebar.collapsed .logo span,
-.sidebar.collapsed .nav-menu span {
+.sidebar.collapsed .logo span {
     opacity: 0;
     width: 0;
     overflow: hidden;
     white-space: nowrap;
-    transition: all var(--transition-normal);
+    transition: opacity var(--transition-normal), width var(--transition-normal);
+}
+
+.sidebar.collapsed .nav-link span {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: opacity var(--transition-normal), width var(--transition-normal);
 }
 
 .sidebar.collapsed .nav-item {
@@ -131,7 +139,23 @@ body {
 }
 
 .sidebar.collapsed .alert-badge {
-    display: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-normal);
+}
+
+/* Smooth transitions for expand */
+.sidebar:not(.collapsed) .logo span,
+.sidebar:not(.collapsed) .nav-link span {
+    opacity: 1;
+    width: auto;
+    transition: opacity var(--transition-normal) 0.1s, width var(--transition-normal);
+}
+
+.sidebar:not(.collapsed) .alert-badge {
+    opacity: 1;
+    visibility: visible;
+    transition: all var(--transition-normal) 0.1s;
 }
 
 .sidebar-header {
@@ -170,13 +194,14 @@ body {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Navigation Menu */
 .nav-menu {
     list-style: none;
     padding: var(--spacing-lg) 0;
 }
 
 .nav-item {
-    position: relative;
+    margin-bottom: var(--spacing-xs);
 }
 
 .nav-link {
@@ -186,12 +211,14 @@ body {
     padding: var(--spacing-md) var(--spacing-lg);
     color: var(--text-sidebar);
     text-decoration: none;
+    border-radius: var(--radius-md);
+    margin: 0 var(--spacing-md);
     transition: all var(--transition-fast);
     position: relative;
 }
 
 .nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.1);
     color: var(--text-white);
 }
 
@@ -200,20 +227,45 @@ body {
     color: var(--text-white);
 }
 
-.nav-item.active::before {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background-color: var(--text-white);
-}
-
 .nav-link i {
     font-size: var(--font-size-lg);
-    width: 20px;
+    width: 24px;
     text-align: center;
+    flex-shrink: 0;
+}
+
+.nav-link span {
+    font-weight: 500;
+    white-space: nowrap;
+    flex: 1;
+}
+
+/* Tooltip for collapsed sidebar */
+.sidebar.collapsed .nav-link {
+    position: relative;
+}
+
+.sidebar.collapsed .nav-link:hover::after {
+    content: attr(title);
+    position: absolute;
+    left: calc(100% + var(--spacing-sm));
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+    white-space: nowrap;
+    z-index: 1001;
+    font-size: var(--font-size-sm);
+    opacity: 0;
+    animation: fadeInTooltip 0.2s ease forwards;
+}
+
+@keyframes fadeInTooltip {
+    from { opacity: 0; transform: translateY(-50%) translateX(-5px); }
+    to { opacity: 1; transform: translateY(-50%) translateX(0); }
 }
 
 .alert-badge {
@@ -238,9 +290,10 @@ body {
 }
 
 /* When sidebar is collapsed */
-body:not(.mobile-view) .sidebar.collapsed + .main-content {
+.sidebar.collapsed ~ .main-content {
     margin-left: var(--sidebar-collapsed-width);
     width: calc(100% - var(--sidebar-collapsed-width));
+    transition: margin-left var(--transition-normal), width var(--transition-normal);
 }
 
 .sidebar.collapsed + .main-content {

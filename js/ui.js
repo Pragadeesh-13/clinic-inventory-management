@@ -161,14 +161,13 @@ class UIManager {
             this.sidebarCollapsed = savedState;
             this.sidebar.classList.toggle('collapsed', this.sidebarCollapsed);
             
+            // Update body class for CSS targeting
+            document.body.classList.toggle('sidebar-collapsed', this.sidebarCollapsed);
+            
             console.log('UIManager: Desktop sidebar state:', this.sidebarCollapsed ? 'collapsed' : 'expanded');
             
-            // Update main content margin
-            const mainContent = Utils.$('.main-content');
-            if (mainContent) {
-                mainContent.style.marginLeft = this.sidebarCollapsed ? 
-                    'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)';
-            }
+            // Update hamburger icon to match state
+            this.updateHamburgerIcon();
         }
     }
 
@@ -240,11 +239,12 @@ class UIManager {
             
             this.sidebar.classList.toggle('collapsed', this.sidebarCollapsed);
             
-            // Update main content margin
+            // The CSS will handle the main content transition automatically
+            // But we can also do it via JavaScript for better control
             const mainContent = Utils.$('.main-content');
             if (mainContent) {
-                mainContent.style.marginLeft = this.sidebarCollapsed ? 
-                    'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)';
+                // Let CSS handle the transition, but we can add a class for additional styling if needed
+                document.body.classList.toggle('sidebar-collapsed', this.sidebarCollapsed);
             }
             
             // Save state
@@ -252,7 +252,35 @@ class UIManager {
             
             // Emit event
             this.emitEvent('sidebarToggled', { collapsed: this.sidebarCollapsed });
+            
+            // Update hamburger icon animation
+            this.updateHamburgerIcon();
         }
+    }
+
+    updateHamburgerIcon() {
+        const toggleIcon = this.sidebarToggle?.querySelector('i');
+        if (toggleIcon) {
+            // Add a subtle animation to indicate state change
+            toggleIcon.style.transform = this.sidebarCollapsed ? 'rotate(90deg)' : 'rotate(0deg)';
+            toggleIcon.style.transition = 'transform var(--transition-fast)';
+        }
+        
+        // Update navigation tooltips for collapsed state
+        this.updateNavigationTooltips();
+    }
+
+    updateNavigationTooltips() {
+        this.navLinks.forEach(link => {
+            const span = link.querySelector('span');
+            if (span && this.sidebarCollapsed) {
+                // Add title attribute for tooltip when collapsed
+                link.setAttribute('title', span.textContent.trim());
+            } else {
+                // Remove title attribute when expanded
+                link.removeAttribute('title');
+            }
+        });
     }
 
     toggleMobileSidebar() {
