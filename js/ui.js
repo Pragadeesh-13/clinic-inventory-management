@@ -3,6 +3,7 @@
 
 class UIManager {
     constructor() {
+        console.log('UIManager: Constructor called');
         this.currentSection = 'dashboard';
         this.modal = null;
         this.toastContainer = null;
@@ -12,13 +13,17 @@ class UIManager {
     }
 
     init() {
+        console.log('UIManager: Initializing...');
         this.setupElements();
         this.setupEventListeners();
         this.setupResponsiveHandling();
         this.initializeTooltips();
+        console.log('UIManager: Initialization complete');
     }
 
     setupElements() {
+        console.log('UIManager: Setting up elements...');
+        
         // Main UI elements
         this.modal = Utils.$('#itemModal');
         this.toastContainer = Utils.$('#toastContainer');
@@ -26,9 +31,23 @@ class UIManager {
         this.sidebar = Utils.$('#sidebar');
         this.sidebarToggle = Utils.$('#sidebarToggle');
         
+        // Log what we found
+        console.log('UIManager: Elements found:', {
+            modal: !!this.modal,
+            toastContainer: !!this.toastContainer,
+            loadingSpinner: !!this.loadingSpinner,
+            sidebar: !!this.sidebar,
+            sidebarToggle: !!this.sidebarToggle
+        });
+        
         // Navigation elements
         this.navLinks = Utils.$$('.nav-link');
         this.contentSections = Utils.$$('.content-section');
+        
+        console.log('UIManager: Navigation elements found:', {
+            navLinks: this.navLinks.length,
+            contentSections: this.contentSections.length
+        });
         
         // Form elements
         this.addItemForm = Utils.$('#addItemForm');
@@ -51,10 +70,25 @@ class UIManager {
 
         // Sidebar toggle
         if (this.sidebarToggle) {
-            this.sidebarToggle.addEventListener('click', () => {
+            console.log('UIManager: Adding sidebar toggle event listener');
+            this.sidebarToggle.addEventListener('click', (e) => {
+                console.log('UIManager: Sidebar toggle clicked');
+                e.preventDefault();
+                e.stopPropagation();
                 this.toggleSidebar();
             });
+        } else {
+            console.warn('UIManager: Sidebar toggle button not found!');
         }
+
+        // Delegate mobile nav button clicks (for dynamic elements)
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('#mobileNavBtn, .mobile-nav-btn')) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleSidebar();
+            }
+        });
 
         // Modal controls
         if (this.closeModalBtn) {
@@ -89,19 +123,52 @@ class UIManager {
             this.handleResize();
         }, 250));
 
-        // Outside click handling
+        // Outside click handling for closing mobile sidebar
         document.addEventListener('click', (e) => {
+            if (this.isMobileView() && this.sidebar && this.sidebar.classList.contains('active')) {
+                // Check if click is outside sidebar and not on toggle button
+                if (!this.sidebar.contains(e.target) && 
+                    !e.target.closest('#mobileNavBtn, .mobile-nav-btn, #sidebarToggle')) {
+                    this.closeMobileSidebar();
+                }
+            }
             this.handleOutsideClick(e);
         });
     }
 
     setupResponsiveHandling() {
+        console.log('UIManager: Setting up responsive handling');
+        
         // Check if mobile view
         this.checkMobileView();
         
         // Add mobile header if needed
         if (this.isMobileView()) {
+            console.log('UIManager: Mobile view detected, adding mobile header');
             this.addMobileHeader();
+        } else {
+            console.log('UIManager: Desktop view detected, initializing desktop sidebar');
+            
+            // Ensure sidebar is visible on desktop
+            if (this.sidebar) {
+                this.sidebar.style.transform = 'none';
+                this.sidebar.style.display = 'block';
+                this.sidebar.style.visibility = 'visible';
+            }
+            
+            // Initialize desktop sidebar state
+            const savedState = Utils.getStorage('sidebarCollapsed', false);
+            this.sidebarCollapsed = savedState;
+            this.sidebar.classList.toggle('collapsed', this.sidebarCollapsed);
+            
+            console.log('UIManager: Desktop sidebar state:', this.sidebarCollapsed ? 'collapsed' : 'expanded');
+            
+            // Update main content margin
+            const mainContent = Utils.$('.main-content');
+            if (mainContent) {
+                mainContent.style.marginLeft = this.sidebarCollapsed ? 
+                    'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)';
+            }
         }
     }
 
@@ -162,21 +229,38 @@ class UIManager {
 
     // Sidebar Management
     toggleSidebar() {
-        this.sidebarCollapsed = !this.sidebarCollapsed;
+        console.log('UIManager: toggleSidebar called, isMobileView:', this.isMobileView());
         
         if (this.isMobileView()) {
             this.toggleMobileSidebar();
         } else {
+            // Desktop sidebar collapse
+            this.sidebarCollapsed = !this.sidebarCollapsed;
+            console.log('UIManager: Desktop sidebar collapsed state:', this.sidebarCollapsed);
+            
             this.sidebar.classList.toggle('collapsed', this.sidebarCollapsed);
+            
+            // Update main content margin
+            const mainContent = Utils.$('.main-content');
+            if (mainContent) {
+                mainContent.style.marginLeft = this.sidebarCollapsed ? 
+                    'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)';
+            }
+            
+            // Save state
+            Utils.setStorage('sidebarCollapsed', this.sidebarCollapsed);
+            
+            // Emit event
+            this.emitEvent('sidebarToggled', { collapsed: this.sidebarCollapsed });
         }
-
-        // Save state
-        Utils.setStorage('sidebarCollapsed', this.sidebarCollapsed);
     }
 
     toggleMobileSidebar() {
         const isActive = this.sidebar.classList.contains('active');
         this.sidebar.classList.toggle('active', !isActive);
+        
+        // Toggle body scroll
+        document.body.style.overflow = !isActive ? 'hidden' : '';
         
         // Toggle overlay
         let overlay = Utils.$('.sidebar-overlay');
@@ -187,19 +271,38 @@ class UIManager {
         if (overlay) {
             overlay.classList.toggle('active', !isActive);
             if (isActive) {
-                setTimeout(() => overlay.remove(), 300);
+                setTimeout(() => {
+                    if (overlay.parentNode) {
+                        overlay.remove();
+                    }
+                }, 300);
             }
         }
+        
+        // Update sidebar state
+        this.sidebarCollapsed = isActive;
+        
+        // Emit event
+        this.emitEvent('sidebarToggled', { mobile: true, active: !isActive });
     }
 
     closeMobileSidebar() {
-        if (this.isMobileView()) {
+        if (this.isMobileView() && this.sidebar) {
             this.sidebar.classList.remove('active');
+            document.body.style.overflow = '';
+            
             const overlay = Utils.$('.sidebar-overlay');
             if (overlay) {
                 overlay.classList.remove('active');
-                setTimeout(() => overlay.remove(), 300);
+                setTimeout(() => {
+                    if (overlay.parentNode) {
+                        overlay.remove();
+                    }
+                }, 300);
             }
+            
+            this.sidebarCollapsed = true;
+            this.emitEvent('sidebarToggled', { mobile: true, active: false });
         }
     }
 
@@ -214,27 +317,35 @@ class UIManager {
     }
 
     addMobileHeader() {
-        if (Utils.$('.mobile-header')) return;
+        // Check if mobile header already exists
+        if (Utils.$('.mobile-header')) {
+            return;
+        }
 
         const header = document.createElement('div');
         header.className = 'mobile-header';
         header.innerHTML = `
-            <button class="mobile-nav-btn" id="mobileNavBtn">
+            <button class="mobile-nav-btn" id="mobileNavBtn" aria-label="Toggle navigation">
                 <i class="fas fa-bars"></i>
             </button>
             <div class="logo">
                 <i class="fas fa-clinic-medical"></i>
                 <span>ClinicInventory</span>
             </div>
+            <div class="mobile-header-spacer"></div>
         `;
 
         const mainContent = Utils.$('.main-content');
-        mainContent.prepend(header);
+        if (mainContent) {
+            mainContent.prepend(header);
+        }
+    }
 
-        // Add event listener for mobile nav button
-        Utils.$('#mobileNavBtn').addEventListener('click', () => {
-            this.toggleSidebar();
-        });
+    removeMobileHeader() {
+        const header = Utils.$('.mobile-header');
+        if (header) {
+            header.remove();
+        }
     }
 
     // Modal Management
@@ -448,9 +559,37 @@ class UIManager {
     handleResize() {
         this.checkMobileView();
         
-        // Close mobile sidebar on desktop
-        if (this.isDesktopView()) {
+        // Handle mobile/desktop transitions
+        if (this.isMobileView()) {
+            // Add mobile header if needed
+            this.addMobileHeader();
+            
+            // Close desktop collapsed state
+            this.sidebar.classList.remove('collapsed');
+            
+            // Reset main content margin
+            const mainContent = Utils.$('.main-content');
+            if (mainContent) {
+                mainContent.style.marginLeft = '';
+            }
+        } else {
+            // Remove mobile header
+            this.removeMobileHeader();
+            
+            // Close mobile sidebar
             this.closeMobileSidebar();
+            
+            // Restore desktop sidebar state
+            const savedState = Utils.getStorage('sidebarCollapsed', false);
+            this.sidebarCollapsed = savedState;
+            this.sidebar.classList.toggle('collapsed', this.sidebarCollapsed);
+            
+            // Update main content margin
+            const mainContent = Utils.$('.main-content');
+            if (mainContent) {
+                mainContent.style.marginLeft = this.sidebarCollapsed ? 
+                    'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)';
+            }
         }
     }
 

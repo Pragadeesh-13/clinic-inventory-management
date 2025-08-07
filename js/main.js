@@ -260,8 +260,31 @@ class ClinicInventoryApp {
             console.log(`✓ ${module.name} initialized`);
         }
         
+        // Force sidebar visibility check after all modules are loaded
+        this.ensureSidebarVisibility();
+        
         // Perform initial data load
         await this.performInitialLoad();
+    }
+
+    ensureSidebarVisibility() {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) {
+            console.log('Main: Ensuring sidebar visibility');
+            
+            // Force sidebar to be visible
+            sidebar.style.display = 'block';
+            sidebar.style.visibility = 'visible';
+            sidebar.style.opacity = '1';
+            
+            // On desktop, ensure it's not transformed
+            if (window.innerWidth > 768) {
+                sidebar.style.transform = 'none';
+                console.log('Main: Desktop mode - sidebar should be visible');
+            }
+        } else {
+            console.error('Main: Sidebar element not found!');
+        }
     }
 
     async performInitialLoad() {
