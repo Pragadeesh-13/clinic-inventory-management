@@ -83,6 +83,12 @@
     .mobile-header {
         display: none;
     }
+    
+    /* Desktop alert badge positioning */
+    .alert-badge {
+        position: relative;
+        margin-left: var(--spacing-sm);
+    }
 }
 
 /* Tablet Portrait (768px and down) */
